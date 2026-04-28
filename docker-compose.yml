@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  esphome:
+    image: txhtxh11/esphome-codegen:latest
+    container_name: esphome
+    restart: unless-stopped
+    ports:
+      - "6052:6052"
+    volumes:
+      # (=) ESPHome 配置目录 ── 存放你的 .yaml 设备配置、编译固件等
+      - ./config:/config
+      # (=) 编译缓存目录 ── 避免每次编译重新下载 Toolchain
+      - ./cache:/cache
+    environment:
+      - ESPHOME_DASHBOARD_USE_PING=true

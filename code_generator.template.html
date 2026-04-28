@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>代码生成 - ESPHome</title>
+  <style>
+    :root {
+      --bg: #1a1a2e;
+      --surface: #16213e;
+      --card: #1e2a4a;
+      --primary: #4fc3f7;
+      --primary-hover: #29b6f6;
+      --danger: #ef5350;
+      --success: #66bb6a;
+      --text: #e0e0e0;
+      --text-secondary: #9e9e9e;
+      --border: #2a3a5e;
+      --input-bg: #0d1b2a;
+      --radius: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    header h1 {
+      font-size: 1.5rem;
+      color: var(--primary);
+    }
+    header a {
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    header a:hover { text-decoration: underline; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card h2 .count {
+      font-size: 0.8rem;
+      background: var(--primary);
+      color: #000;
+      padding: 1px 8px;
+      border-radius: 10px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #000;
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+    .btn-danger:hover { background: #e53935; }
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 14px 4px 10px;
+      font-size: 0.8rem;
+      margin: 3px;
+    }
+    .chip .remove {
+      cursor: pointer;
+      color: var(--danger);
+      font-weight: bold;
+    }
+
+    .chip-container {
+      min-height: 36px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2px;
+    }
+    .chip-container .placeholder {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-style: italic;
+    }
+
+    .add-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--primary);
+      cursor: pointer;
+      font-size: 0.85rem;
+      margin-top: 8px;
+      padding: 6px 10px;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      background: transparent;
+    }
+    .add-btn:hover {
+      border-color: var(--primary);
+      background: rgba(79, 195, 247, 0.05);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal h3 {
+      color: var(--primary);
+      margin-bottom: 16px;
+    }
+    .modal .btn-row {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+
+    /* YAML preview */
+    #yaml-preview {
+      width: 100%;
+      min-height: 200px;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.85rem;
+      background: #0a0e1a;
+      color: #a8d8ea;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-top: 10px;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    .tab-bar {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 20px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 4px;
+    }
+    .tab {
+      padding: 8px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+    }
+    .tab.active {
+      background: var(--primary);
+      color: #000;
+      font-weight: 500;
+    }
+    .tab-section { display: none; }
+    .tab-section.active { display: block; }
+
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 10px 0;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .checkbox-item:hover { border-color: var(--primary); }
+    .checkbox-item.selected { border-color: var(--primary); background: rgba(79,195,247,0.08); }
+    .checkbox-item input { display: none; }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-secondary);
+    }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 10px; }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: var(--success);
+      color: #000;
+      padding: 12px 24px;
+      border-radius: var(--radius);
+      font-weight: 500;
+      display: none;
+      z-index: 2000;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>⚡ ESPHome 代码生成器</h1>
+    <a href="./">← 返回 Dashboard</a>
+  </header>
+
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <button class="tab active" data-tab="basic">基础配置</button>
+    <button class="tab" data-tab="sensors">传感器</button>
+    <button class="tab" data-tab="switches">开关 & 灯</button>
+    <button class="tab" data-tab="preview">预览 & 下载</button>
+  </div>
+
+  <!-- Tab: Basic Config -->
+  <div class="tab-section active" id="tab-basic">
+    <div class="card">
+      <h2>📋 设备信息</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>设备名称（英文/数字/下划线）</label>
+          <input type="text" id="device-name" value="my-device" placeholder="my-device" />
+        </div>
+        <div class="form-group">
+          <label>友好名称（中文也行）</label>
+          <input type="text" id="device-friendly" value="我的设备" placeholder="我的设备" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>平台</label>
+          <select id="device-platform">
+            <option value="ESP32">ESP32</option>
+            <option value="ESP8266">ESP8266</option>
+            <option value="RP2040">RP2040 (树莓派 Pico)</option>
+            <option value="BK72XX">BK72XX (博流)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>开发板型号</label>
+          <input type="text" id="device-board" value="nodemcu-32s" placeholder="nodemcu-32s" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>WiFi SSID</label>
+          <input type="text" id="wifi-ssid" placeholder="可留空，稍后填写" />
+        </div>
+        <div class="form-group">
+          <label>WiFi 密码</label>
+          <input type="password" id="wifi-password" placeholder="可留空" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>自定义 substitutions（每行一个 key: value）</label>
+        <textarea id="substitutions" rows="3" placeholder="例如：&#10;device_name: my-device&#10;wifi_ssid: MyHomeWiFi"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: Sensors -->
+  <div class="tab-section" id="tab-sensors">
+    <div class="grid">
+      <div class="card">
+        <h2>🌡️ 已选传感器</h2>
+        <div id="sensor-chips" class="chip-container">
+          <span class="placeholder">还没添加传感器，点击右侧添加</span>
+        </div>
+      </div>
+      <div class="card">
+        <h2>➕ 添加传感器</h2>
+        <div class="form-group">
+          <label>传感器类型</label>
+          <select id="sensor-type-select">
+            <option value="">-- 选择 --</option>
+            <option value="dht">DHT11/DHT22 (温湿度)</option>
+            <option value="dallas">DS18B20 (温度传感器)</option>
+            <option value="bmp180">BMP180 (气压/温度)</option>
+            <option value="bme280">BME280 (温湿度/气压)</option>
+            <option value="bme680">BME680 (温湿气/VOC)</option>
+            <option value="sht3xd">SHT3x (温湿度)</option>
+            <option value="ds18b20_onewire">DS18B20 (单总线多路)</option>
+            <option value="hcsr04">HC-SR04 (超声波距离)</option>
+            <option value="pmsx003">PMSx003 (颗粒物/PM)</option>
+            <option value="mhz19">MH-Z19 (CO2)</option>
+            <option value="scd4x">SCD4x (CO2/温湿度)</option>
+            <option value="ina219">INA219 (电流/电压/功率)</option>
+            <option value="ina3221">INA3221 (三通道电流)</option>
+            <option value="max31855">MAX31855 (热电偶温度)</option>
+            <option value="max6675">MAX6675 (热电偶温度)</option>
+            <option value="ads1115">ADS1115 (ADC/电压)</option>
+            <option value="adc">内置 ADC (模拟输入)</option>
+            <option value="hlw8012">HLW8012 (电量测量)</option>
+            <option value="apds9960">APDS9960 (颜色/手势)</option>
+            <option value="tcs34725">TCS34725 (颜色传感器)</option>
+            <option value="vl53l0x">VL53L0X (激光测距)</option>
+            <option value="mpu6050">MPU6050 (6轴陀螺仪)</option>
+          </select>
+        </div>
+        <div id="sensor-pin-group" class="form-group" style="display:none">
+          <label>GPIO 引脚</label>
+          <input type="number" id="sensor-pin" placeholder="例如 4" />
+        </div>
+        <div id="sensor-name-group" class="form-group" style="display:none">
+          <label>传感器名称</label>
+          <input type="text" id="sensor-name" placeholder="传感器名称" value="My Sensor" />
+        </div>
+        <div id="sensor-extra-group" class="form-group" style="display:none">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="addSensor()">添加传感器</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h2>🔘 二进制传感器 (按钮/门磁等)</h2>
+      <div id="binary-sensor-chip" class="chip-container">
+        <span class="placeholder">暂无</span>
+      </div>
+      <div class="form-row" style="margin-top:10px">
+        <div class="form-group">
+          <select id="binary-type" style="width:100%">
+            <option value="gpio">GPIO 按键/开关</option>
+            <option value="status">ESPHome 连接状态</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <input type="number" id="binary-pin" placeholder="GPIO 引脚" />
+        </div>
+        <div class="form-group">
+          <input type="text" id="binary-name" placeholder="名称" value="Button" />
+        </div>
+        <div class="form-group" style="display:flex;align-items:flex-end">
+          <button class="btn btn-primary btn-sm" onclick="addBinarySensor()">+ 添加</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: Switches & Lights -->
+  <div class="tab-section" id="tab-switches">
+    <div class="card">
+      <h2>🔌 开关</h2>
+      <div id="switch-chips" class="chip-container">
+        <span class="placeholder">暂无开关</span>
+      </div>
+      <div class="form-row" style="margin-top:10px">
+        <div class="form-group">
+          <select id="switch-type">
+            <option value="gpio">GPIO 开关</option>
+            <option value="relay">继电器</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <input type="number" id="switch-pin" placeholder="GPIO 引脚" />
+        </div>
+        <div class="form-group">
+          <input type="text" id="switch-name" placeholder="名称" value="Switch" />
+        </div>
+        <div class="form-group">
+          <select id="switch-restore">
+            <option value="RESTORE_DEFAULT_OFF">断电恢复-关</option>
+            <option value="RESTORE_DEFAULT_ON">断电恢复-开</option>
+            <option value="ALWAYS_OFF">始终关闭</option>
+            <option value="ALWAYS_ON">始终开启</option>
+          </select>
+        </div>
+        <div class="form-group" style="display:flex;align-items:flex-end">
+          <button class="btn btn-primary btn-sm" onclick="addSwitch()">+ 添加</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <h2>💡 灯</h2>
+      <div id="light-chips" class="chip-container">
+        <span class="placeholder">暂无灯</span>
+      </div>
+      <div class="form-row" style="margin-top:10px">
+        <div class="form-group">
+          <select id="light-type">
+            <option value="binary">单色开关灯</option>
+            <option value="monochromatic">调光灯 (PWM)</option>
+            <option value="rgb">RGB 彩灯</option>
+            <option value="rgbw">RGBW 彩灯</option>
+            <option value="neopixel">WS2812/NeoPixel 灯带</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <input type="number" id="light-pin" placeholder="GPIO 引脚" />
+        </div>
+        <div class="form-group">
+          <input type="text" id="light-name" placeholder="名称" value="Light" />
+        </div>
+        <div class="form-group" id="light-leds-group" style="display:none">
+          <input type="number" id="light-num-leds" placeholder="LED 数量" value="30" />
+        </div>
+        <div class="form-group" style="display:flex;align-items:flex-end">
+          <button class="btn btn-primary btn-sm" onclick="addLight()">+ 添加</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab: Preview -->
+  <div class="tab-section" id="tab-preview">
+    <div class="card">
+      <h2>📄 YAML 预览</h2>
+      <div id="yaml-preview">点击下方「生成代码」按钮查看结果</div>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="generateCode()">🔄 生成代码</button>
+        <button class="btn btn-primary" onclick="downloadCode()">⬇️ 下载 .yaml 文件</button>
+        <button class="btn btn-danger" onclick="clearAll()">🗑️ 清空所有</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+// ============ State ============
+const state = {
+  sensors: [],
+  binarySensors: [],
+  switches: [],
+  lights: [],
+  lastYaml: '',
+};
+
+// ============ Tabs ============
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ============ Sensor Type Change ============
+document.getElementById('sensor-type-select').addEventListener('change', function() {
+  const type = this.value;
+  document.getElementById('sensor-pin-group').style.display = 'block';
+  document.getElementById('sensor-name-group').style.display = 'block';
+  const extraGroup = document.getElementById('sensor-extra-group');
+  extraGroup.innerHTML = '';
+  extraGroup.style.display = 'block';
+
+  if (type === 'hcsr04' || type === 'ultrasonic') {
+    extraGroup.innerHTML = `
+      <label>Echo 引脚</label>
+      <input type="number" id="sensor-echo" placeholder="Echo GPIO" />
+    `;
+  } else if (type === 'pmsx003' || type === 'mhz19') {
+    extraGroup.innerHTML = `
+      <label>TX 引脚</label>
+      <input type="number" id="sensor-tx" placeholder="TX GPIO" value="17" />
+      <label>RX 引脚</label>
+      <input type="number" id="sensor-rx" placeholder="RX GPIO" value="16" />
+      <label>波特率</label>
+      <input type="number" id="sensor-baud" placeholder="9600" value="9600" />
+    `;
+  } else if (type === 'ads1115') {
+    extraGroup.innerHTML = `
+      <label>输入通道</label>
+      <select id="sensor-mux">
+        <option value="A0_GND">A0 (对 GND)</option>
+        <option value="A1_GND">A1 (对 GND)</option>
+        <option value="A2_GND">A2 (对 GND)</option>
+        <option value="A3_GND">A3 (对 GND)</option>
+        <option value="A0_A1">A0-A1 (差分)</option>
+        <option value="A2_A3">A2-A3 (差分)</option>
+      </select>
+    `;
+  } else if (type === 'hlw8012') {
+    extraGroup.innerHTML = `
+      <label>SEL 引脚</label>
+      <input type="number" id="sensor-sel" placeholder="SEL GPIO" />
+      <label>CF 引脚</label>
+      <input type="number" id="sensor-cf" placeholder="CF GPIO" />
+      <label>CF1 引脚</label>
+      <input type="number" id="sensor-cf1" placeholder="CF1 GPIO" />
+    `;
+  } else if (type === 'max31855' || type === 'max6675') {
+    extraGroup.innerHTML = `
+      <label>CS 引脚</label>
+      <input type="number" id="sensor-cs" placeholder="CS GPIO" />
+    `;
+  } else if (type === 'dallas' || type === 'ds18b20_onewire') {
+    extraGroup.innerHTML = `
+      <label>设备地址 (不填则自动发现)</label>
+      <input type="text" id="sensor-address" placeholder="0x0000000000000000" />
+    `;
+  } else {
+    extraGroup.innerHTML = '<span style="color:var(--text-secondary);font-size:0.85rem">无额外配置</span>';
+  }
+});
+
+// ============ Light Type Change ============
+document.getElementById('light-type').addEventListener('change', function() {
+  document.getElementById('light-leds-group').style.display =
+    this.value === 'neopixel' ? 'block' : 'none';
+});
+
+// ============ Sensors ============
+function addSensor() {
+  const type = document.getElementById('sensor-type-select').value;
+  if (!type) { showToast('请选择传感器类型'); return; }
+
+  const name = document.getElementById('sensor-name').value || type;
+  const pin = document.getElementById('sensor-pin').value || '';
+
+  const sensor = { type, name, pin };
+
+  const extra = {};
+  const echo = document.getElementById('sensor-echo');
+  if (echo) extra.echo_pin = echo.value;
+  const tx = document.getElementById('sensor-tx');
+  if (tx) { extra.tx_pin = tx.value; extra.rx_pin = document.getElementById('sensor-rx').value; extra.baud_rate = parseInt(document.getElementById('sensor-baud').value) || 9600; }
+  const mux = document.getElementById('sensor-mux');
+  if (mux) extra.multiplexer = mux.value;
+  const sel = document.getElementById('sensor-sel');
+  if (sel) { extra.sel_pin = sel.value; extra.cf_pin = document.getElementById('sensor-cf').value; extra.cf1_pin = document.getElementById('sensor-cf1').value; }
+  const cs = document.getElementById('sensor-cs');
+  if (cs) extra.cs_pin = cs.value;
+  const addr = document.getElementById('sensor-address');
+  if (addr) extra.address = addr.value;
+  if (type === 'hcsr04' || type === 'ultrasonic') {
+    extra.trigger_pin = pin;
+  }
+
+  sensor.extra = extra;
+  state.sensors.push(sensor);
+  renderSensorChips();
+  showToast(`已添加: ${name}`);
+}
+
+function renderSensorChips() {
+  const container = document.getElementById('sensor-chips');
+  if (state.sensors.length === 0) {
+    container.innerHTML = '<span class="placeholder">还没添加传感器，点击右侧添加</span>';
+    return;
+  }
+  container.innerHTML = state.sensors.map((s, i) =>
+    `<span class="chip">📡 ${s.name} (${s.type}) <span class="remove" onclick="removeSensor(${i})">×</span></span>`
+  ).join('');
+}
+
+function removeSensor(i) {
+  state.sensors.splice(i, 1);
+  renderSensorChips();
+}
+
+// ============ Binary Sensors ============
+function addBinarySensor() {
+  const type = document.getElementById('binary-type').value;
+  const pin = document.getElementById('binary-pin').value || '';
+  const name = document.getElementById('binary-name').value || 'Button';
+  state.binarySensors.push({ type, pin, name });
+  renderBinaryChips();
+}
+
+function renderBinaryChips() {
+  const container = document.getElementById('binary-sensor-chip');
+  if (state.binarySensors.length === 0) {
+    container.innerHTML = '<span class="placeholder">暂无</span>';
+    return;
+  }
+  container.innerHTML = state.binarySensors.map((s, i) =>
+    `<span class="chip">🔘 ${s.name} (${s.type}) <span class="remove" onclick="removeBinary(${i})">×</span></span>`
+  ).join('');
+}
+
+function removeBinary(i) {
+  state.binarySensors.splice(i, 1);
+  renderBinaryChips();
+}
+
+// ============ Switches ============
+function addSwitch() {
+  const type = document.getElementById('switch-type').value;
+  const pin = document.getElementById('switch-pin').value || '';
+  const name = document.getElementById('switch-name').value || 'Switch';
+  const restore = document.getElementById('switch-restore').value;
+  state.switches.push({ type, pin, name, restore_mode: restore });
+  renderSwitchChips();
+}
+
+function renderSwitchChips() {
+  const container = document.getElementById('switch-chips');
+  if (state.switches.length === 0) {
+    container.innerHTML = '<span class="placeholder">暂无开关</span>';
+    return;
+  }
+  container.innerHTML = state.switches.map((s, i) =>
+    `<span class="chip">🔌 ${s.name} (GPIO{s.pin}) <span class="remove" onclick="removeSwitch(${i})">×</span></span>`
+  ).join('');
+}
+
+function removeSwitch(i) {
+  state.switches.splice(i, 1);
+  renderSwitchChips();
+}
+
+// ============ Lights ============
+function addLight() {
+  const type = document.getElementById('light-type').value;
+  const pin = document.getElementById('light-pin').value || '';
+  const name = document.getElementById('light-name').value || 'Light';
+  const numLeds = parseInt(document.getElementById('light-num-leds').value) || 30;
+  state.lights.push({ type, pin, name, num_leds: numLeds, id: state.lights.length + 1 });
+  renderLightChips();
+}
+
+function renderLightChips() {
+  const container = document.getElementById('light-chips');
+  if (state.lights.length === 0) {
+    container.innerHTML = '<span class="placeholder">暂无灯</span>';
+    return;
+  }
+  container.innerHTML = state.lights.map((l, i) =>
+    `<span class="chip">💡 ${l.name} (${l.type}) <span class="remove" onclick="removeLight(${i})">×</span></span>`
+  ).join('');
+}
+
+function removeLight(i) {
+  state.lights.splice(i, 1);
+  renderLightChips();
+}
+
+// ============ Generate ============
+function buildConfig() {
+  const name = document.getElementById('device-name').value || 'my-device';
+  const friendly = document.getElementById('device-friendly').value || name;
+  const platform = document.getElementById('device-platform').value;
+  const board = document.getElementById('device-board').value || 'nodemcu-32s';
+  const wifiSsid = document.getElementById('wifi-ssid').value;
+  const wifiPassword = document.getElementById('wifi-password').value;
+  const substitutions = document.getElementById('substitutions').value;
+
+  // Normalize sensor configs (merge extra fields)
+  const sensors = state.sensors.map(s => ({
+    type: s.type,
+    name: s.name,
+    pin: s.pin,
+    ...s.extra,
+  }));
+
+  return {
+    name: name,
+    friendly_name: friendly,
+    platform: platform,
+    board: board,
+    wifi_ssid: wifiSsid,
+    wifi_password: wifiPassword,
+    substitutions: substitutions,
+    sensors: sensors,
+    binary_sensors: state.binarySensors,
+    switches: state.switches,
+    lights: state.lights,
+  };
+}
+
+function generateCode() {
+  const config = buildConfig();
+  fetch('./generate/api', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(config),
+  })
+  .then(r => {
+    if (!r.ok) return r.json().then(e => { throw new Error(e.error); });
+    return r.text();
+  })
+  .then(yaml => {
+    state.lastYaml = yaml;
+    document.getElementById('yaml-preview').textContent = yaml;
+    showToast('✅ 代码生成成功！');
+    // Switch to preview tab
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+    document.querySelector('[data-tab="preview"]').classList.add('active');
+    document.getElementById('tab-preview').classList.add('active');
+  })
+  .catch(e => {
+    showToast('❌ ' + e.message);
+    document.getElementById('yaml-preview').textContent = '错误: ' + e.message;
+  });
+}
+
+function downloadCode() {
+  if (!state.lastYaml) {
+    generateCode();
+    setTimeout(() => downloadCode(), 500);
+    return;
+  }
+  const name = document.getElementById('device-name').value || 'device';
+  const blob = new Blob([state.lastYaml], { type: 'text/yaml' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name + '.yaml';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('⬇️ 文件已下载!');
+}
+
+function clearAll() {
+  if (!confirm('确定清空所有配置吗？')) return;
+  state.sensors = [];
+  state.binarySensors = [];
+  state.switches = [];
+  state.lights = [];
+  state.lastYaml = '';
+  renderSensorChips();
+  renderBinaryChips();
+  renderSwitchChips();
+  renderLightChips();
+  document.getElementById('yaml-preview').textContent = '点击「生成代码」按钮查看结果';
+  showToast('🗑️ 已清空');
+}
+
+// ============ Toast ============
+let toastTimer;
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toast.style.display = 'none'; }, 2500);
+}
+</script>
+</body>
+</html>

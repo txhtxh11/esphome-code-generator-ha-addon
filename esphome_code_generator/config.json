@@ -1,0 +1,26 @@
+{
+  "name": "ESPHome Code Generator",
+  "version": "1.0.0",
+  "slug": "esphome_code_generator",
+  "description": "Visual ESPHome YAML configuration generator with web interface",
+  "url": "https://github.com/txhtxh11/ha-addon-repo",
+  "arch": ["amd64", "armhf", "armv7", "aarch64"],
+  "startup": "application",
+  "boot": "auto",
+  "ingress": true,
+  "ingress_port": 6052,
+  "panel_icon": "mdi:code-braces",
+  "ports": {
+    "6052/tcp": 6052
+  },
+  "ports_description": {
+    "6052/tcp": "ESPHome Dashboard"
+  },
+  "map": ["config:rw", "share:rw"],
+  "options": {
+    "esphome_config": ""
+  },
+  "schema": {
+    "esphome_config": "str?"
+  }
+}
