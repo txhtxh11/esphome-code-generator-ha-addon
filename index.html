@@ -510,6 +510,7 @@
                     <div class="row"><div class="label-hint"><strong>快速连接 (fast_connect) · 跳过AP扫描</strong></div><select id="fast_connect"><option value="true">启用</option><option value="false">关闭</option><option value="none">不启用</option></select></div>
                     <div class="row"><div class="label-hint"><strong>WiFi 重启超时 (reboot_timeout) · 推荐 5min</strong></div><div class="time-input-group"><input id="wifi_reboot_timeout" value="5min" placeholder="5min,30s,0s"><button type="button" class="never-btn" onclick="setNeverTimeout('wifi_reboot_timeout')">never</button></div></div>
                     <div class="row"><div class="label-hint"><strong>强制门户 (captive_portal) · 自动弹出配网页面</strong></div><select id="captive_portal_enable"><option value="true">启用</option><option value="false">关闭</option></select></div>
+                    <div class="row"><div class="label-hint"><strong>目标 ESPHome 版本</strong> · 低于 2025.11.0 会自动省略 min_auth_mode</div><select id="esphome_target_version" onchange="toggleEsphomeVersionCustom()"><option value="latest" selected>最新版 (2025.11.0+)</option><option value="2025.10.1">2025.10.1</option><option value="2025.9.0">2025.9.0</option><option value="2025.8.3">2025.8.3</option><option value="custom">自定义…</option></select><input id="esphome_target_version_custom" placeholder="例如 2025.10.1" style="display:none; margin-top:8px;"></div>
                 </div>
             </div>
 
@@ -963,7 +964,7 @@
         yaml += `\nwifi:\n`;
         if(ssid) yaml += `  ssid: "${ssid}"\n  password: "${pwd||''}"\n`;
         else yaml += `  # ssid: ""\n  # password: ""\n`;
-        yaml += `  min_auth_mode: WPA2\n`;
+        if(wifiSupportsMinAuthMode()) yaml += `  min_auth_mode: WPA2\n`;
         if(fastConn !== 'none') yaml += `  fast_connect: ${fastConn==='true'}\n`;
         yaml += `  reboot_timeout: ${wifiTimeout}\n  ap:\n    ssid: "${apSsid}"\n`;
         yaml += apPwd ? `    password: "${apPwd}"\n` : `    password: ""\n`;
@@ -1175,6 +1176,36 @@
             const filename = `${document.getElementById('device_name')?.value || 'esp_config'}.yaml`;
             safeDownload(txt, filename);
         });
+    }
+
+    // ========== ESPHome 版本能力判断 ==========
+    // min_auth_mode 自 ESPHome 2025.11.0 起才被 wifi 组件支持；
+    // 在更低版本里它是非法选项，会导致配置校验失败。
+    function getTargetEsphomeVersion() {
+        const sel = document.getElementById('esphome_target_version');
+        const custom = document.getElementById('esphome_target_version_custom');
+        let v = sel ? sel.value : 'latest';
+        if (v === 'custom') v = (custom && custom.value.trim()) || 'latest';
+        return v;
+    }
+    function esphomeVersionAtLeast(target, min) {
+        if (!target || target === 'latest') return true; // 未知/最新 -> 按支持处理
+        const parse = (x) => String(x).trim().replace(/^v/i, '').split('.').map(n => parseInt(n, 10) || 0);
+        const a = parse(target), b = parse(min);
+        for (let i = 0; i < Math.max(a.length, b.length); i++) {
+            const d = (a[i] || 0) - (b[i] || 0);
+            if (d !== 0) return d > 0;
+        }
+        return true;
+    }
+    function wifiSupportsMinAuthMode() {
+        return esphomeVersionAtLeast(getTargetEsphomeVersion(), '2025.11.0');
+    }
+
+    function toggleEsphomeVersionCustom() {
+        const sel = document.getElementById('esphome_target_version');
+        const custom = document.getElementById('esphome_target_version_custom');
+        if (custom) custom.style.display = (sel && sel.value === 'custom') ? 'block' : 'none';
     }
 
     // ========== CMPOWER W1 固定配置内容 (保持不变) ==========
