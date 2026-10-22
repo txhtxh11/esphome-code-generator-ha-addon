@@ -1,1 +1,6 @@
 push.sh
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
